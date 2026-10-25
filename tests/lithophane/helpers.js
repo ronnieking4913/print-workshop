@@ -3,8 +3,8 @@ const LT = (() => {
   // Default settings, same as the page's defaults. Override any of them per test.
   const settings = over => ({
     zoom: 1, brightness: 0, contrast: 1, midtones: 0, sharpness: 0.45, shape: "rect", soft: false, text: "",
-    width: 76, height: 100, frame: 3, minT: 0.6, maxT: 3, res: 0.2,
-    distance: 20, curved: true, radius: 60, ...over,
+    width: 136, height: 105, frame: 7.5, minT: 0.5, maxT: 2.8, res: 0.25,
+    distance: 30, curved: true, radius: 80, ...over,
   });
 
   // A picture made of brightness values (0 = black, 1 = white), row by row from the top.

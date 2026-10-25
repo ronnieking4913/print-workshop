@@ -85,7 +85,7 @@
 
   test("settings that can't be printed give a clear message instead of a broken file", () => {
     expect(LM.mesh.check(settings())).toBe("", "defaults:");
-    for (const over of [{ maxT: 0.5 }, { frame: 40 }, { radius: 3 }, { width: 250, radius: 50 }, { distance: 8 }, { width: 25 }]) {
+    for (const over of [{ maxT: 0.5 }, { frame: 60 }, { radius: 3 }, { width: 250, radius: 50 }, { distance: 8 }, { width: 25 }]) {
       expect(LM.mesh.check(settings(over)).length).toBeGreaterThan(0, JSON.stringify(over));
     }
   });
