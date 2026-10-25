@@ -1,5 +1,5 @@
-/* The menu in the page header that switches between the makers. Shared by every maker page,
-   on top of styles.css. */
+/* Shared by every maker page, on top of styles.css: the menu in the page header that switches
+   between the makers, and the Reset settings button (js/remember.js). */
 .apps {
   margin-left: auto; align-self: center;
   display: flex; gap: 2px; padding: 3px;
@@ -11,3 +11,4 @@
 }
 .apps a:hover { color: var(--ink); background: var(--field); }
 .apps a[aria-current="page"] { background: var(--ink); color: var(--panel); }
+.step.save .reset { justify-self: center; }

@@ -35,20 +35,40 @@
       <input type="file" id="file" accept="image/*" hidden>
 
       <label class="field" for="zoom"><span>Zoom <output id="zoomVal">1.0×</output></span>
-        <input type="range" id="zoom" min="100" max="400" value="100">
+        <input type="range" id="zoom" min="100" max="400" value="100" data-forget>
       </label>
+      <button class="ghost" id="auto" type="button" title="Sets Brightness, Contrast and Midtones for this picture. Done for you when you choose a picture.">✨ Auto-adjust light</button>
       <div class="grid2">
         <label class="field" for="brightness"><span>Brightness <output id="brightVal">0</output></span>
-          <input type="range" id="brightness" min="-40" max="40" value="0">
+          <input type="range" id="brightness" min="-60" max="60" value="0" data-forget>
         </label>
         <label class="field" for="contrast"><span>Contrast <output id="contrastVal">100</output></span>
-          <input type="range" id="contrast" min="50" max="200" value="100">
+          <input type="range" id="contrast" min="50" max="300" value="100" data-forget>
+        </label>
+        <label class="field" for="midtones" title="Lightens or darkens faces and other middle greys, without changing black and white"><span>Midtones <output id="midVal">0</output></span>
+          <input type="range" id="midtones" min="-100" max="100" value="0" data-forget>
+        </label>
+        <label class="field" for="sharpness" title="Makes eyes, hair and edges crisper"><span>Sharpness <output id="sharpVal">30</output></span>
+          <input type="range" id="sharpness" min="0" max="100" value="30">
         </label>
       </div>
     </section>
 
+    <section class="step" id="shapeControls">
+      <h2><span class="num">2</span>Shape &amp; words</h2>
+      <div class="grid2">
+        <label class="field" for="shape"><span>Picture shape</span>
+          <select id="shape"><option value="rect" selected>Rectangle</option><option value="oval">Oval</option><option value="heart">Heart</option></select>
+        </label>
+        <label class="switch" title="Fades the picture into the frame instead of a sharp edge"><span>Soft edge</span><input type="checkbox" role="switch" id="soft"></label>
+      </div>
+      <label class="field" for="text"><span>Words under the picture <small>optional</small></span>
+        <input type="text" id="text" maxlength="40" placeholder="e.g. Grandma &amp; Lily · 2025" data-forget>
+      </label>
+    </section>
+
     <section class="step" id="sizeControls">
-      <h2><span class="num">2</span>Size</h2>
+      <h2><span class="num">3</span>Size</h2>
       <div class="grid3">
         <label class="field" for="width"><span>Width</span><span class="unit"><input type="number" id="width" value="76" min="20" max="250" step="1"><i>mm</i></span></label>
         <label class="field" for="height"><span>Height</span><span class="unit"><input type="number" id="height" value="100" min="20" max="250" step="1"><i>mm</i></span></label>
@@ -62,23 +82,18 @@
     </section>
 
     <section class="step" id="fitControls">
-      <h2><span class="num">3</span>Night light fit</h2>
+      <h2><span class="num">4</span>Night light fit</h2>
       <label class="field" for="distance" title="From the middle of the light to the front of the picture"><span>Light to picture</span><span class="unit"><input type="number" id="distance" value="20" min="0" max="150" step="0.5"><i>mm</i></span></label>
       <label class="switch" title="Bends the picture around the light. Turn off for a flat picture."><span>Curved</span><input type="checkbox" role="switch" id="curved" checked></label>
       <label class="field" for="radius" id="radiusField" title="Smaller bends more; larger is flatter"><span>Curve radius</span><span class="unit"><input type="number" id="radius" value="60" min="10" max="1000" step="1"><i>mm</i></span></label>
-      <label class="switch" title="A strip along the bottom with a slot that slides onto the night light."><span>Mount with slot</span><input type="checkbox" role="switch" id="mountOn" checked></label>
-      <div id="mountControls" class="grid2">
-        <label class="field" for="slotW"><span>Slot width</span><span class="unit"><input type="number" id="slotW" value="2.2" min="0.5" max="10" step="0.1"><i>mm</i></span></label>
-        <label class="field" for="slotD" title="How far the night light goes up into the slot"><span>Slot depth</span><span class="unit"><input type="number" id="slotD" value="6" min="1" max="30" step="0.5"><i>mm</i></span></label>
-        <label class="field" for="slotWall" title="Plastic on each side of the slot"><span>Slot walls</span><span class="unit"><input type="number" id="slotWall" value="1.6" min="0.8" max="5" step="0.1"><i>mm</i></span></label>
-        <label class="field" for="adapter" title="Solid plastic between the top of the slot and the picture"><span>Above slot</span><span class="unit"><input type="number" id="adapter" value="3" min="0.5" max="20" step="0.5"><i>mm</i></span></label>
-      </div>
+      <p class="hint">The base and its slot fit the Emotionlite night light. They're fixed, so every print fits.</p>
     </section>
 
     <section class="step save">
       <button class="primary" id="save" type="button">Download STL</button>
       <p class="saved" id="saved"></p>
       <p class="err" id="err" role="alert" hidden></p>
+      <button class="ghost small reset" id="resetSettings" type="button" title="Your settings are remembered on this computer. This puts back the original ones.">Reset settings</button>
     </section>
   </aside>
 
@@ -101,16 +116,18 @@
     <footer>
       <p class="hint">Light parts of the picture glow; dark parts stay dark.</p>
       <dl class="stats" id="stats"></dl>
-      <p class="hint">Print standing up, mount side down, in white PLA with 100% infill.</p>
+      <p class="hint">Print standing up on its base, in white PLA with 100% infill.</p>
     </footer>
   </section>
 </main>
 
 <script src="js/lithophane/picture.js"></script>
+<script src="js/lithophane/shapes.js"></script>
 <script src="js/lithophane/thickness.js"></script>
 <script src="js/lithophane/mesh.js"></script>
 <script src="js/lithophane/stl.js"></script>
 <script src="js/lithophane/preview.js"></script>
 <script src="js/lithophane/app.js"></script>
+<script src="js/remember.js"></script>
 </body>
 </html>

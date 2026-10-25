@@ -11,5 +11,13 @@
 :root[data-theme="dark"] { --night: #0b0907; --night-glow: #201a12; --mount: #b77a3e; }
 
 .night { background: radial-gradient(ellipse at center, var(--night-glow) 0%, var(--night) 70%); }
+/* a text box, styled like styles.css's number boxes */
+input[type=text] {
+  width: 100%; min-width: 0; height: 32px; padding: 0 8px;
+  border: 1px solid var(--line); border-radius: 7px;
+  background: var(--field); color: var(--ink); font: 500 13px var(--font-body);
+}
+.field small { font-size: 11px; }
+
 .drag canvas { cursor: grab; touch-action: none; } /* touch-action: dragging moves the picture instead of scrolling */
 .drag canvas.dragging { cursor: grabbing; }

@@ -9,6 +9,8 @@ Tools that turn a picture into something to 3D print. Everything runs in the bro
 
 Double-click either page to open it in Edge or Chrome. The menu at the top right of each page switches between them.
 
+Both pages **remember their settings** on this computer (in the browser's storage), so they're the same the next time the page opens. **Reset settings**, under Download STL, puts back the original ones. Settings that belong to one picture, like the lithophane's zoom, brightness and words, aren't remembered. This is `js/remember.js`, shared by both pages; it saves every input in the controls column except those marked `data-forget`.
+
 ## Cookie Cutter Maker
 
 Turns a picture into a 3D-printable cookie cutter (STL), with an optional stamp that presses the picture's inside details into the dough.
@@ -87,6 +89,8 @@ picture → background.js → shape.js → cutter.js ─┬→ stl.js → .stl f
 | `js/stamp.js` | Builds the optional stamp plate and detail lines |
 | `js/stl.js` | Writes the 3D file |
 | `js/preview.js` | Draws the picture and cutter previews |
+| `js/remember.js` | Remembers the settings between visits (shared with the Lithophane Maker) |
+| `menu.css` | The menu that switches makers and the Reset settings button (shared) |
 | `js/app.js` | Connects the page's controls to the steps above |
 | `tests/` | Test runner and tests |
 
@@ -104,6 +108,7 @@ Double-click `tests/index.html`. Each test shows ✓ or ✗, with a total at the
 | `tests/cutter.test.js` | Size, wall and rim thickness and height, rim off, grow outline, one outline around everything, closed mesh, mirroring, empty pictures |
 | `tests/stamp.test.js` | Detail lines found, gaps pressed in, no tiny specks, plate fits inside the cutter, plate and line heights, alignment after mirroring, both objects in one STL |
 | `tests/layout.test.js` | Long file names, hidden settings, tall/wide/small pictures fitting their panel, picture buttons fitting, toggle switches (builds pieces of the page with the real stylesheet) |
+| `tests/remember.test.js` | Settings come back next time and the page hears about them, data-forget settings start fresh, Reset settings, unknown saved choices ignored |
 
 The tests draw their own pictures. Chrome and Edge won't let a page opened from disk read the pixels of image files beside it, so real photos are checked by hand in the app.
 
@@ -133,12 +138,13 @@ Turns a photo into a lithophane for a night light: a thin, curved plastic pictur
 
 Double-click `Lithophane Maker.html` to open it in Edge or Chrome, or click **Lithophane** in the menu on the Cookie Cutter Maker.
 
-1. **Picture.** Choose or drag in a photo. The **Picture** preview shows the whole photo; drag the bright box to choose the part that's printed, and scroll (or use **Zoom**) to zoom in or out. **On the night light** shows the result, curved and glowing. **Brightness** and **Contrast** change how much light gets through. **Turn picture** rotates it a quarter turn.
-2. **Size.** Width and height of the picture panel, the frame around it, and how thin (brightest) and thick (darkest) the plastic gets.
-3. **Night light fit.** How far the picture sits from the light, how much it curves, and the slot that slides onto the night light.
-4. **Save.** **Download STL** saves `<name>-lithophane.stl`.
+1. **Picture.** Choose or drag in a photo. The **Picture** preview shows the whole photo; drag the bright box to choose the part that's printed, and scroll (or use **Zoom**) to zoom in or out. **On the night light** shows the result, curved and glowing. Choosing a picture runs **Auto-adjust light**, which sets **Brightness**, **Contrast** and **Midtones** to suit it; fine-tune them by hand, or click Auto-adjust again after moving the box. **Sharpness** makes eyes and edges crisper. **Turn picture** rotates it a quarter turn.
+2. **Shape & words.** Show the picture as a rectangle, oval or heart, with an optional **soft edge** that fades into the frame. **Words under the picture** (like names and a date) glow in a strip under it.
+3. **Size.** Width and height of the picture panel, the frame around it, and how thin (brightest) and thick (darkest) the plastic gets.
+4. **Night light fit.** How far the picture sits from the light and how much it curves. The base that attaches to the night light is fixed, so it always fits.
+5. **Save.** **Download STL** saves `<name>-lithophane.stl`.
 
-Print it **standing up, mount side down, in white PLA with 100% infill**. The front is smooth and the bumps face the light.
+Print it **standing up on its base, in white PLA with 100% infill**. The front is smooth and the bumps face the light.
 
 **The night light measurements are placeholders.** Measure the real night light and change the default `value="…"` numbers in `Lithophane Maker.html` (Size and Night light fit), so every print fits without retyping them.
 
@@ -147,16 +153,21 @@ Print it **standing up, mount side down, in white PLA with 100% infill**. The fr
 | Setting | Default | What it does |
 |---|---|---|
 | Zoom | 1.0× | Shows less of the picture, bigger (1–4×) |
-| Brightness / Contrast | 0 / 100 | Lighten or darken the picture, and spread light and dark apart |
+| Auto-adjust light | On choosing a picture | Sets Brightness, Contrast and Midtones so the shown part uses the full range, with middle greys (like faces) slightly light |
+| Brightness / Contrast | Set by Auto-adjust | Lighten or darken the picture, and spread light and dark apart |
+| Midtones | Set by Auto-adjust | Lightens (or darkens) middle greys like skin, without changing black and white |
+| Sharpness | 30 | Makes edges crisper by comparing each point with its neighbors (0–100) |
+| Picture shape | Rectangle | Rectangle, Oval or Heart; outside the shape is solid frame |
+| Soft edge | Off | Fades the picture into the frame over 2.5 mm |
+| Words under the picture | None | Up to 40 characters, 7.5 mm tall in an 11 mm strip above the bottom frame (shrunk to fit if long) |
 | Width / Height | 76 / 100 mm | Size of the picture panel, frame included (width is measured along the curve) |
 | Frame | 3 mm | Solid border around the picture, at full thickness |
 | Thinnest / Thickest | 0.6 / 3 mm | Plastic thickness for white and black |
 | Detail | Normal (0.2 mm) | Grid size: Fine 0.15 mm, Normal 0.2 mm, Draft 0.3 mm |
 | Light to picture | 20 mm | From the middle of the light to the front of the picture |
 | Curved, Curve radius | On, 60 mm | Bends the picture around the light; smaller bends more |
-| Mount with slot | On | A strip along the bottom with a slot that slides onto the night light |
-| Slot width / depth | 2.2 / 6 mm | Size of the slot |
-| Slot walls / Above slot | 1.6 / 3 mm | Plastic beside and above the slot |
+
+Fixed base values (in `js/lithophane/mesh.js`, `BASE`): the picture stands on a flat 1.8 mm base with a U-shaped slot, 17 mm wide and 17 mm deep, that slides around the night light's bulb post. They fit the Emotionlite night light, with the light at the middle of the slot's rounded end. The base runs from the front of the picture back to the slot, 8 mm wider than the slot on each side at the back edge. They aren't on the page because they only change for a different night light.
 
 ### How it works
 
@@ -165,11 +176,11 @@ photo → picture.js → thickness.js → mesh.js → stl.js → .stl file
 ```
 
 1. **Picture** (`js/lithophane/picture.js`). Reads the photo as brightness (see-through parts count as white), and works out which part shows from the zoom and where it was dragged.
-2. **Thickness** (`js/lithophane/thickness.js`). Gives every grid point a thickness between Thinnest (white) and Thickest (black), with the frame at full thickness.
-3. **Mesh** (`js/lithophane/mesh.js`). Bends the panel around the light, builds the front, back and edges as one closed solid, and adds the mount's three blocks (two slot walls and the top). The parts overlap by 0.3 mm so slicers merge them.
+2. **Thickness** (`js/lithophane/thickness.js`). Gives every grid point a thickness between Thinnest (white) and Thickest (black), after sharpening and Brightness, Contrast and Midtones. The shape (`js/lithophane/shapes.js`) and the words are drawn on a canvas at grid size: outside the shape is full thickness (blurred for a soft edge), and the letters are Thinnest so they glow.
+3. **Mesh** (`js/lithophane/mesh.js`). Bends the panel around the light, builds the front, back and edges as one closed solid, and adds the base: its outline (with the slot) is cut into triangles and given its thickness. The base reaches 0.3 mm up into the picture so slicers merge them.
 4. **STL** (`js/lithophane/stl.js`). Writes a binary STL.
 
-The **Picture** preview shows the whole photo with the printed part boxed. **On the night light** estimates the glow from the thickness (light fades exponentially through plastic) and wraps it around the curve, on its mount, as seen from the front.
+The **Picture** preview shows the whole photo with the printed part boxed. **On the night light** estimates the glow from the thickness (light fades exponentially through plastic) and wraps it around the curve, on its base, as seen from the front.
 
 Files: `Lithophane Maker.html` (the page), `lithophane.css` (its colors, on top of `styles.css`), `menu.css` (the menu shared by both pages), `js/lithophane/` (the code, sharing the global object `LM`), and `js/lithophane/app.js` (connects the controls to the steps).
 
@@ -180,10 +191,11 @@ Double-click `tests/lithophane.html`. It uses the same `tests/runner.js` as the 
 | File | Covers |
 |---|---|
 | `tests/lithophane/picture.test.js` | White thin and black thick, frame, picture the right way up, brightness and contrast, cropping, dragging stays inside the picture, turning, reading pixels |
-| `tests/lithophane/mesh.test.js` | Closed mesh with outward faces (curved, flat, with and without mount), amount of plastic, distance from the light, width along the curve, mount under the picture, size readout, clear messages for impossible settings |
+| `tests/lithophane/mesh.test.js` | Closed mesh with outward faces (curved, flat, with and without base), amount of plastic, distance from the light, width along the curve, picture on the base, slot shape and position, size readout, clear messages for impossible settings |
+| `tests/lithophane/shape.test.js` | Oval and heart shapes, soft edge, words glow and make room, too-short pictures for words, Midtones, Sharpness, Auto-adjust, the shape drawn in the Picture preview |
 | `tests/lithophane/layout.test.js` | Menu fits and highlights the open maker, previews fit their panel, Picture preview marks the printed part, turning turns the color photo, night light preview changes with the picture |
 
 ### Known limitations
 
 - **Large files.** At Normal detail the STL is about 38 MB (Fine: about 68 MB). Slicers handle that fine; Draft makes it about half the size.
-- **The mount is a best guess** at how the panel attaches: a full-width strip with a slot that opens downward. If the night light attaches differently, the mount in `js/lithophane/mesh.js` needs changing to match.
+- **Where the light sits in the slot is a guess.** It's taken as the middle of the slot's rounded end. Check the first print on the real night light before printing more.

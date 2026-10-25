@@ -1,15 +1,19 @@
-// Step 3: bend the thickness map around the light and turn it into a closed 3D mesh,
-// with the mount (a strip with a slot that slides onto the night light) underneath.
+// Step 3: bend the thickness map around the light and turn it into a closed 3D mesh, standing
+// on a flat base. The base has a U-shaped slot that slides around the night light's bulb post.
 //
-// Coordinates in mm: X runs left to right as seen from the front, Z is up, the light is at the
-// origin and the viewer stands at -Y. The front of the picture is smooth; the bumps face the light.
+// Coordinates in mm: X runs left to right as seen from the front, Z is up, the light (the middle
+// of the slot's rounded end) is at the origin and the viewer stands at -Y. The front of the
+// picture is smooth; the bumps face the light.
 window.LM = window.LM || {};
 
 LM.mesh = (() => {
-  const OVERLAP = 0.3; // separate parts overlap this much so slicers merge them into one solid, mm
+  const OVERLAP = 0.3; // the base reaches this far up into the picture so slicers merge them, mm
 
-  const mountHeight = o => (o.mountOn ? o.slotD + o.adapter : 0);
-  const mountDepth = o => 2 * o.slotWall + o.slotW;
+  // The base that fits the night light
+  // (the Emotionlite night light). Fixed on purpose: only a different night light changes it.
+  // slotW: width of the slot (fits the bulb post), slotD: from the back edge to the slot's far end,
+  // thickness: of the base, margin: base on each side of the slot at the back edge. All mm.
+  const BASE = { slotW: 17, slotD: 17, thickness: 1.8, margin: 8 };
 
   // Where a point of the flat layout ends up once the panel is bent around the light.
   // s: mm along the front from the middle (right is +), depth: mm in from the front, z: mm up.
@@ -23,35 +27,46 @@ LM.mesh = (() => {
     };
   }
 
+  // The base seen from above, counter-clockwise: along the front of the picture, in to the
+  // back edge, around the slot (its rounded end wraps around the light), and back out.
+  function baseOutline(o) {
+    const bend = bender(o), r = BASE.slotW / 2;
+    const back = BASE.slotD - r, corner = r + BASE.margin;
+    const pts = spaced(-o.width / 2, o.width / 2, o.curved ? Math.ceil(o.width) + 1 : 2).map(s => bend(s, 0, 0).slice(0, 2));
+    pts.push([corner, back], [r, back]);
+    for (let i = 0; i <= 24; i++) {
+      const a = (-Math.PI * i) / 24;
+      pts.push([r * Math.cos(a), r * Math.sin(a)]);
+    }
+    pts.push([-r, back], [-corner, back]);
+    return pts;
+  }
+
   // A plain-English problem with the settings, or "" when they make a printable part.
   function check(o) {
     if (!(o.width > 0 && o.height > 0)) return "Width and height must be more than 0.";
     if (!(o.minT > 0)) return "Thinnest must be more than 0 mm.";
     if (!(o.maxT > o.minT)) return "Thickest must be more than Thinnest.";
     if (!(o.frame >= 0) || o.width - 2 * o.frame <= 0 || o.height - 2 * o.frame <= 0) return "The frame is too wide for the picture.";
-    if (!(o.distance >= 0)) return "Light to picture can't be less than 0.";
-    if (o.mountOn && !(o.slotW > 0 && o.slotD > 0 && o.slotWall > 0 && o.adapter > 0)) return "The slot sizes must all be more than 0.";
+    if (o.text && !(LM.thickness.region(o).h > 10)) return "The words leave no room for the picture: make it taller or the frame thinner.";
+    if (!(o.distance > 0)) return "Light to picture must be more than 0.";
     if (o.curved) {
-      if (!(o.radius > Math.max(o.maxT, o.mountOn ? mountDepth(o) : 0) + 1)) return "Curve radius is too small for how thick the picture is.";
+      if (!(o.radius > o.maxT + 1)) return "Curve radius is too small for how thick the picture is.";
       if (o.width / o.radius > Math.PI) return "Curve radius is too small: the picture would bend more than half a circle.";
     }
+    const r = BASE.slotW / 2;
+    if (!(o.distance - o.maxT > r + 1)) return "The picture is too close to the light: make Light to picture bigger.";
+    const tip = bender(o)(o.width / 2, 0, 0);
+    if (!(tip[0] > r + BASE.margin + 1 && tip[1] < BASE.slotD - r - 1))
+      return "The picture is too narrow to reach around the base's slot: make it wider, or the curve radius bigger.";
     return "";
   }
 
   function build(map, o) {
-    const mesh = { pos: [], idx: [] }, bend = bender(o), base = mountHeight(o);
+    const mesh = { pos: [], idx: [] }, bend = bender(o), base = BASE.thickness;
     const s = spaced(-o.width / 2, o.width / 2, map.cols), z = spaced(base, base + o.height, map.rows);
     shell(mesh, bend, s, z, () => 0, (i, j) => map.t[j * map.cols + i]);
-
-    if (o.mountOn) {
-      // A flat mount needs no extra points; a curved one gets a point every mm to follow the curve.
-      const ms = spaced(-o.width / 2, o.width / 2, o.curved ? Math.ceil(o.width) + 1 : 2);
-      const block = (d0, d1, z0, z1) => shell(mesh, bend, ms, [z0, z1], () => d0, () => d1);
-      const depth = mountDepth(o);
-      block(0, o.slotWall, 0, o.slotD + OVERLAP);               // front wall of the slot
-      block(depth - o.slotWall, depth, 0, o.slotD + OVERLAP);   // back wall of the slot
-      block(0, depth, o.slotD, base + OVERLAP);                 // top of the slot, under the picture
-    }
+    prism(mesh, baseOutline(o), 0, base + OVERLAP);
     return mesh;
   }
 
@@ -79,20 +94,54 @@ LM.mesh = (() => {
     }
   }
 
+  // A flat solid from z0 to z1 with the outline pts (counter-clockwise from above).
+  function prism(mesh, pts, z0, z1) {
+    const n = pts.length, first = mesh.pos.length / 3;
+    for (const z of [z0, z1]) for (const [x, y] of pts) mesh.pos.push(x, y, z);
+    const lo = i => first + i, hi = i => first + n + i;
+    for (const [a, b, c] of triangulate(pts)) {
+      mesh.idx.push(hi(a), hi(b), hi(c)); // top, facing up
+      mesh.idx.push(lo(a), lo(c), lo(b)); // bottom, facing down
+    }
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      mesh.idx.push(lo(i), lo(j), hi(j), lo(i), hi(j), hi(i)); // sides, facing out
+    }
+  }
+
+  // Splits a counter-clockwise outline into triangles by cutting off "ears" one at a time.
+  function triangulate(pts) {
+    const cross = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const idx = pts.map((_, i) => i), tris = [];
+    while (idx.length > 3) {
+      let cut = false;
+      for (let k = 0; k < idx.length && !cut; k++) {
+        const i = idx[(k + idx.length - 1) % idx.length], j = idx[k], l = idx[(k + 1) % idx.length];
+        const [a, b, c] = [pts[i], pts[j], pts[l]];
+        if (cross(a, b, c) <= 1e-9) continue; // a dent or a straight run, not an ear
+        const blocked = idx.some(m => m !== i && m !== j && m !== l &&
+          cross(a, b, pts[m]) > 1e-9 && cross(b, c, pts[m]) > 1e-9 && cross(c, a, pts[m]) > 1e-9);
+        if (blocked) continue;
+        tris.push([i, j, l]); idx.splice(k, 1); cut = true;
+      }
+      if (!cut) throw new Error("Couldn't build the base with these settings. Try a smaller slot.");
+    }
+    tris.push(idx);
+    return tris;
+  }
+
   function spaced(a, b, n) {
     return Array.from({ length: n }, (_, i) => a + ((b - a) * i) / (n - 1));
   }
 
   // Outer size of the printed part in mm: width (X), depth (Y) and height (Z).
   function footprint(o) {
-    const bend = bender(o), deepest = Math.max(o.maxT, o.mountOn ? mountDepth(o) : 0);
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-    for (const s of spaced(-o.width / 2, o.width / 2, 101)) for (const d of [0, o.maxT, deepest]) {
-      const [x, y] = bend(s, d, 0);
-      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-    }
-    return { width: x1 - x0, depth: y1 - y0, height: mountHeight(o) + o.height };
+    const bend = bender(o);
+    const pts = spaced(-o.width / 2, o.width / 2, 101).flatMap(s => [bend(s, 0, 0), bend(s, o.maxT, 0)]);
+    pts.push(...baseOutline(o));
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    return { width: Math.max(...xs) - Math.min(...xs), depth: Math.max(...ys) - Math.min(...ys), height: BASE.thickness + o.height };
   }
 
-  return { build, check, bender, footprint, mountHeight, mountDepth, spaced };
+  return { build, check, bender, footprint, baseOutline, spaced, BASE, OVERLAP };
 })();

@@ -14,24 +14,25 @@
   function readSettings() {
     return {
       zoom: +$("zoom").value / 100, brightness: +$("brightness").value / 100, contrast: +$("contrast").value / 100,
+      midtones: +$("midtones").value / 100, sharpness: (+$("sharpness").value / 100) * 1.5,
+      shape: $("shape").value, soft: $("soft").checked, text: $("text").value.trim(),
       width: +$("width").value, height: +$("height").value, frame: +$("frame").value,
       minT: +$("minT").value, maxT: +$("maxT").value, res: +$("res").value,
       distance: +$("distance").value, curved: $("curved").checked, radius: +$("radius").value,
-      mountOn: $("mountOn").checked, slotW: +$("slotW").value, slotD: +$("slotD").value,
-      slotWall: +$("slotWall").value, adapter: +$("adapter").value,
     };
   }
   const viewOf = o => ({ ...state.view, zoom: o.zoom });
-  const aspectOf = o => (o.width - 2 * o.frame) / (o.height - 2 * o.frame); // shape of the printed part of the picture
+  const aspectOf = o => { const r = LM.thickness.region(o); return r.w / r.h; }; // shape of the printed part of the picture
 
   // ---- previews (re-run when the picture or any setting changes) ----
   function update() {
     const o = readSettings();
     $("radiusField").hidden = !o.curved;
-    $("mountControls").hidden = !o.mountOn;
     $("zoomVal").textContent = o.zoom.toFixed(1) + "×";
     $("brightVal").textContent = $("brightness").value;
     $("contrastVal").textContent = $("contrast").value;
+    $("midVal").textContent = $("midtones").value;
+    $("sharpVal").textContent = $("sharpness").value;
 
     const problem = LM.mesh.check(o);
     state.ok = !problem;
@@ -39,7 +40,7 @@
     $("save").disabled = !state.ok;
     if (!state.ok) return;
 
-    LM.preview.photo($("photo"), state.p, LM.picture.crop(state.p, aspectOf(o), viewOf(o)));
+    LM.preview.photo($("photo"), state.p, LM.picture.crop(state.p, aspectOf(o), viewOf(o)), o.shape);
     LM.preview.lit(state.glow, LM.thickness.build(state.p, viewOf(o), o, Math.max(o.res, PREVIEW_RES)), o);
     LM.preview.onLight($("onLight"), state.glow, o);
     const f = LM.mesh.footprint(o);
@@ -53,13 +54,22 @@
   let timer;
   const later = fn => { clearTimeout(timer); timer = setTimeout(fn, 60); };
 
+  // Sets Brightness, Contrast and Midtones to suit the part of the picture that shows.
+  function autoAdjust() {
+    const o = readSettings(), a = LM.thickness.auto(state.p, viewOf(o), aspectOf(o));
+    $("brightness").value = Math.round(a.brightness * 100);
+    $("contrast").value = Math.round(a.contrast * 100);
+    $("midtones").value = Math.round(a.midtones * 100);
+    update();
+  }
+
   // ---- loading a picture ----
   function loadImage(img, name) {
     state.p = LM.picture.read(img);
     state.view = { cx: 0.5, cy: 0.5 };
     state.name = name;
     $("zoom").value = 100;
-    update();
+    autoAdjust();
   }
 
   function loadFile(file) {
@@ -125,6 +135,7 @@
     .forEach(el => el.id !== "file" && el.addEventListener("input", () => later(update)));
   $("turn").addEventListener("click", () => { state.p = LM.picture.rotate(state.p); state.view = { cx: 0.5, cy: 0.5 }; update(); });
   $("center").addEventListener("click", () => { state.view = { cx: 0.5, cy: 0.5 }; update(); });
+  $("auto").addEventListener("click", autoAdjust);
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => state.ok && update());
 
   // ---- moving the box by dragging it, and zooming with the scroll wheel ----

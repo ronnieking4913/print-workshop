@@ -6,8 +6,9 @@ LM.preview = (() => {
   const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const DARKEST = 0.04; // share of the light that still gets through the thickest plastic
 
-  // The whole photo in color, darkened outside r (LM.picture.crop), the part that gets printed.
-  function photo(canvas, p, r) {
+  // The whole photo in color, darkened outside r (LM.picture.crop), the part that gets printed,
+  // with the picture's shape (LM.shapes) drawn inside it.
+  function photo(canvas, p, r, shape) {
     canvas.width = p.W; canvas.height = p.H;
     const g = canvas.getContext("2d");
     g.drawImage(p.canvas, 0, 0);
@@ -19,6 +20,12 @@ LM.preview = (() => {
     const line = Math.max(2, Math.max(p.W, p.H) / 250);
     g.strokeStyle = "#fff"; g.lineWidth = line;
     g.strokeRect(r.x + line / 2, r.y + line / 2, r.w - line, r.h - line);
+    if (shape && shape !== "rect") {
+      g.setLineDash([line * 3, line * 2]);
+      LM.shapes.path(g, shape, r.x, r.y, r.w, r.h);
+      g.stroke();
+      g.setLineDash([]);
+    }
   }
 
   // Light fades with plastic thickness (Beer-Lambert law), so thin parts glow and thick parts stay dark.
@@ -40,14 +47,15 @@ LM.preview = (() => {
   // The lithophane on the night light, glowing, seen from the front and a little above, so the
   // curve shows. picture: the lit-up preview canvas (from lit), wrapped around the curve.
   function onLight(canvas, picture, o) {
-    const bend = LM.mesh.bender(o), base = LM.mesh.mountHeight(o), top = base + o.height;
+    const bend = LM.mesh.bender(o), base = LM.mesh.BASE.thickness, top = base + o.height;
     // a simple pinhole camera in front of the light, looking straight at it from above the picture
     const eye = { y: -(o.distance + 220), z: top + 40 };
     const project = ([x, y, z]) => [x / (y - eye.y), -(z - eye.z) / (y - eye.y)];
     const s = LM.mesh.spaced(-o.width / 2, o.width / 2, picture.width + 1);
     const edges = s.map(v => ({ top: project(bend(v, 0, top)), bottom: project(bend(v, 0, base)), floor: project(bend(v, 0, 0)) }));
+    const baseTop = LM.mesh.baseOutline(o).map(([x, y]) => project([x, y, base]));
 
-    const pts = edges.flatMap(e => [e.top, e.floor]);
+    const pts = [...edges.flatMap(e => [e.top, e.floor]), ...baseTop];
     const x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0]));
     const y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
     const pad = 0.06 * Math.max(x1 - x0, y1 - y0), k = 1000 / Math.max(x1 - x0 + 2 * pad, y1 - y0 + 2 * pad);
@@ -56,12 +64,15 @@ LM.preview = (() => {
     const g = canvas.getContext("2d");
     g.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (o.mountOn) {
-      g.fillStyle = token("--mount"); g.beginPath();
-      edges.forEach((e, i) => (i ? g.lineTo(X(e.bottom[0]), Y(e.bottom[1])) : g.moveTo(X(e.bottom[0]), Y(e.bottom[1]))));
-      edges.slice().reverse().forEach(e => g.lineTo(X(e.floor[0]), Y(e.floor[1])));
+    // the base: its top (seen from above, with the slot), then its front edge below the picture
+    const polygon = points => {
+      g.beginPath();
+      points.forEach(([x, y], i) => (i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))));
       g.closePath(); g.fill();
-    }
+    };
+    g.fillStyle = token("--mount");
+    polygon(baseTop);
+    polygon([...edges.map(e => e.bottom), ...edges.map(e => e.floor).reverse()]);
     // one strip per column of the picture: along a column only the height changes, so a
     // straight stretch is exact
     for (let i = 0; i < picture.width; i++) {
