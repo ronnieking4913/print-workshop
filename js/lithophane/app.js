@@ -7,28 +7,30 @@
     name: "moon",
     p: null,                  // picture brightness (LM.picture.read), turned as the user chose
     view: { cx: 0.5, cy: 0.5 }, // middle of the part of the picture that shows, as fractions
+    aspect: 1,                // shape of the part that shows (width / height); Height follows it
     ok: false,                // settings make a printable part
     glow: document.createElement("canvas"), // the lithophane lit up, flat, before it's wrapped around the curve
   };
 
   function readSettings() {
-    return {
+    const o = {
       zoom: +$("zoom").value / 100, brightness: +$("brightness").value / 100, contrast: +$("contrast").value / 100,
       midtones: +$("midtones").value / 100, sharpness: (+$("sharpness").value / 100) * 1.5,
       shape: $("shape").value, soft: $("soft").checked, text: $("text").value.trim(),
-      width: +$("width").value, height: +$("height").value, frame: +$("frame").value,
+      width: +$("width").value, frame: +$("frame").value,
       minT: +$("minT").value, maxT: +$("maxT").value, res: +$("res").value,
       distance: +$("distance").value, curved: $("curved").checked, radius: +$("radius").value,
     };
+    o.height = LM.thickness.heightFor(o, state.aspect); // the whole chosen part fits across Width
+    return o;
   }
   const viewOf = o => ({ ...state.view, zoom: o.zoom });
-  const aspectOf = o => { const r = LM.thickness.region(o); return r.w / r.h; }; // shape of the printed part of the picture
 
   // ---- previews (re-run when the picture or any setting changes) ----
   // Just the Picture preview: quick enough to redraw on every pointer move while dragging.
   function showBox(o = readSettings()) {
     if (LM.mesh.check(o)) return;
-    LM.preview.photo($("photo"), state.p, LM.picture.crop(state.p, aspectOf(o), viewOf(o)), o.shape);
+    LM.preview.photo($("photo"), state.p, LM.picture.crop(state.p, state.aspect, viewOf(o)), o.shape);
   }
   let frame = 0;
   const showBoxSoon = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; showBox(); }); };
@@ -37,6 +39,7 @@
     const o = readSettings();
     $("radiusField").hidden = !o.curved;
     $("zoomVal").textContent = o.zoom.toFixed(1) + "×";
+    $("height").value = o.height.toFixed(1);
     $("brightVal").textContent = $("brightness").value;
     $("contrastVal").textContent = $("contrast").value;
     $("midVal").textContent = $("midtones").value;
@@ -64,7 +67,7 @@
 
   // Sets Brightness, Contrast and Midtones to suit the part of the picture that shows.
   function autoAdjust() {
-    const o = readSettings(), a = LM.thickness.auto(state.p, viewOf(o), aspectOf(o));
+    const o = readSettings(), a = LM.thickness.auto(state.p, viewOf(o), state.aspect);
     $("brightness").value = Math.round(a.brightness * 100);
     $("contrast").value = Math.round(a.contrast * 100);
     $("midtones").value = Math.round(a.midtones * 100);
@@ -72,11 +75,17 @@
   }
 
   // ---- loading a picture ----
+  // Choose all of the picture: Height then follows the picture's own shape.
+  function wholePicture() {
+    state.view = { cx: 0.5, cy: 0.5 };
+    state.aspect = state.p.W / state.p.H;
+    $("zoom").value = 100;
+  }
+
   function loadImage(img, name) {
     state.p = LM.picture.read(img);
-    state.view = { cx: 0.5, cy: 0.5 };
+    wholePicture();
     state.name = name;
-    $("zoom").value = 100;
     autoAdjust();
   }
 
@@ -141,7 +150,7 @@
   // ---- wiring ----
   document.querySelectorAll(".controls input, .controls select")
     .forEach(el => el.id !== "file" && el.addEventListener("input", () => later(update)));
-  $("turn").addEventListener("click", () => { state.p = LM.picture.rotate(state.p); state.view = { cx: 0.5, cy: 0.5 }; update(); });
+  $("turn").addEventListener("click", () => { state.p = LM.picture.rotate(state.p); wholePicture(); update(); });
   $("center").addEventListener("click", () => { state.view = { cx: 0.5, cy: 0.5 }; update(); });
   $("auto").addEventListener("click", autoAdjust);
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => state.ok && update());
@@ -162,7 +171,7 @@
 
   // Which edges of the box the pointer is on ({ l, r, t, b }), or null when it's on none.
   function edgesAt(e) {
-    const o = readSettings(), r = LM.picture.crop(state.p, aspectOf(o), viewOf(o)), at = toPicture(e);
+    const o = readSettings(), r = LM.picture.crop(state.p, state.aspect, viewOf(o)), at = toPicture(e);
     const near = (e.pointerType === "touch" ? 20 : 8) / at.scale; // how close counts, in screen pixels
     const across = at.y > r.y - near && at.y < r.y + r.h + near, along = at.x > r.x - near && at.x < r.x + r.w + near;
     const edges = {
@@ -176,38 +185,29 @@
   const cursorFor = ed => !ed ? "" : (ed.l || ed.r) && (ed.t || ed.b)
     ? ((ed.l && ed.t) || (ed.r && ed.b) ? "nwse-resize" : "nesw-resize") : ed.l || ed.r ? "ew-resize" : "ns-resize";
 
-  // Dragging an edge changes Width or Height (a corner changes both). The photo keeps its size
-  // per mm, so a wider box prints wider and shows more of the photo; the opposite edges stay put.
+  // Dragging an edge (or a corner) changes which part of the photo is printed, to any shape.
+  // The print keeps its Width, and Height follows the new shape. The opposite edges stay put.
   function resize(d, e) {
-    const at = toPicture(e), r0 = d.box, o0 = d.o, k = r0.w / d.region.w; // picture pixels per mm
-    const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
-    const l = d.edges.l ? clamp(at.x, 0, r0.x + r0.w) : r0.x, r = d.edges.r ? clamp(at.x, r0.x, state.p.W) : r0.x + r0.w;
-    const t = d.edges.t ? clamp(at.y, 0, r0.y + r0.h) : r0.y, b = d.edges.b ? clamp(at.y, r0.y, state.p.H) : r0.y + r0.h;
-    const size = (input, picturePx, around, moved, was) => {
-      if (!moved) return was;
-      const mm = Math.round(picturePx / k + around); // around: the frame (and words) around the picture
-      return clamp(mm, Math.max(+input.min, Math.ceil(around) + 5), +input.max);
-    };
-    const width = size($("width"), r - l, o0.width - d.region.w, d.edges.l || d.edges.r, o0.width);
-    const height = size($("height"), b - t, o0.height - d.region.h, d.edges.t || d.edges.b, o0.height);
-    const a = LM.thickness.region({ ...o0, width, height }), w = a.w * k, h = a.h * k;
-    const box = { x: d.edges.l ? r0.x + r0.w - w : r0.x, y: d.edges.t ? r0.y + r0.h - h : r0.y, w, h };
-    const view = LM.picture.fit(state.p, a.w / a.h, box);
+    const at = toPicture(e), r0 = d.box, { l, r, t, b } = d.edges, p = state.p;
+    const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi), least = Math.max(p.W, p.H) / 20; // smallest box side
+    const x0 = l ? clamp(at.x, 0, r0.x + r0.w - least) : r0.x, x1 = r ? clamp(at.x, r0.x + least, p.W) : r0.x + r0.w;
+    const y0 = t ? clamp(at.y, 0, r0.y + r0.h - least) : r0.y, y1 = b ? clamp(at.y, r0.y + least, p.H) : r0.y + r0.h;
+    const box = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    state.aspect = box.w / box.h;
+    const view = LM.picture.fit(p, state.aspect, box);
     state.view = { cx: view.cx, cy: view.cy };
     $("zoom").value = view.zoom * 100;
-    $("width").value = width; $("height").value = height;
-    // tells the page (and Remember) that Width and Height changed
-    ["width", "height"].forEach(id => $(id).dispatchEvent(new Event("input", { bubbles: true })));
     showBoxSoon(); // the night light waits for a pause (update), the box follows the pointer
+    later(update);
   }
 
-  let drag = null; // { last } while moving the box, { edges, box, region, o } while resizing it
+  let drag = null; // { last } while moving the box, { edges, box } while resizing it
   photo.addEventListener("pointerdown", e => {
     if (e.button !== 0 || !state.ok) return;
     try { photo.setPointerCapture(e.pointerId); } catch { /* keep going without capture */ }
     const edges = edgesAt(e), o = readSettings();
     drag = edges
-      ? { edges, o, region: LM.thickness.region(o), box: LM.picture.crop(state.p, aspectOf(o), viewOf(o)) }
+      ? { edges, box: LM.picture.crop(state.p, state.aspect, viewOf(o)) }
       : { last: [e.clientX, e.clientY] };
     photo.classList.add("dragging");
   });
@@ -216,9 +216,9 @@
     if (drag.edges) { resize(drag, e); return; }
     // turn the pointer's movement into picture pixels, then into a share of the box
     const o = readSettings(), { scale } = toPicture(e);
-    const r = LM.picture.crop(state.p, aspectOf(o), viewOf(o));
+    const r = LM.picture.crop(state.p, state.aspect, viewOf(o));
     // pan moves the picture under the box, so moving the box is the opposite direction
-    state.view = LM.picture.pan(state.p, aspectOf(o), viewOf(o),
+    state.view = LM.picture.pan(state.p, state.aspect, viewOf(o),
       -(e.clientX - drag.last[0]) / scale / r.w, -(e.clientY - drag.last[1]) / scale / r.h);
     drag.last = [e.clientX, e.clientY];
     showBoxSoon();

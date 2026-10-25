@@ -3,7 +3,7 @@ const LT = (() => {
   // Default settings, same as the page's defaults. Override any of them per test.
   const settings = over => ({
     zoom: 1, brightness: 0, contrast: 1, midtones: 0, sharpness: 0.45, shape: "rect", soft: false, text: "",
-    width: 136, height: 85, frame: 4.5, minT: 0.5, maxT: 2.8, res: 0.25,
+    width: 110, height: 85, frame: 4.5, minT: 0.5, maxT: 2.8, res: 0.25,
     distance: 30, curved: true, radius: 80, ...over,
   });
 

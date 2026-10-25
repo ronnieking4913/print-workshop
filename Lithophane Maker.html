@@ -70,8 +70,8 @@
     <section class="step" id="sizeControls">
       <h2><span class="num">3</span>Size</h2>
       <div class="grid3">
-        <label class="field" for="width"><span>Width</span><span class="unit"><input type="number" id="width" value="136" min="20" max="250" step="1"><i>mm</i></span></label>
-        <label class="field" for="height"><span>Height</span><span class="unit"><input type="number" id="height" value="85" min="20" max="250" step="1"><i>mm</i></span></label>
+        <label class="field" for="width"><span>Width</span><span class="unit"><input type="number" id="width" value="110" min="20" max="250" step="1"><i>mm</i></span></label>
+        <label class="field" for="height" title="Set by the shape of the part of the photo you choose, so all of it fits across Width"><span>Height</span><span class="unit"><input type="number" id="height" value="85" readonly tabindex="-1" data-forget><i>mm</i></span></label>
         <label class="field" for="frame"><span>Frame</span><span class="unit"><input type="number" id="frame" value="4.5" min="0" max="20" step="0.5"><i>mm</i></span></label>
         <label class="field" for="minT" title="Thickness of the brightest parts of the picture"><span>Thinnest</span><span class="unit"><input type="number" id="minT" value="0.5" min="0.3" max="3" step="0.1"><i>mm</i></span></label>
         <label class="field" for="maxT" title="Thickness of the darkest parts of the picture, and of the frame"><span>Thickest</span><span class="unit"><input type="number" id="maxT" value="2.8" min="1" max="8" step="0.1"><i>mm</i></span></label>
@@ -105,7 +105,7 @@
         <button class="ghost small" id="turn" type="button" title="Turn the picture a quarter turn clockwise">↻ Turn picture</button>
         <button class="ghost small" id="center" type="button" title="Put the box back in the middle of the picture">Center picture</button>
       </div>
-      <p class="hint full">Drag the bright box to choose the part that's printed, or drag its edges to change Width and Height. Scroll to zoom in or out.</p>
+      <p class="hint full">Drag the bright box to move it, and drag its edges to choose the part that's printed. It fits across Width; Height follows its shape.</p>
     </header>
     <div class="canvas-box checker drag"><canvas id="photo"></canvas></div>
   </section>

@@ -18,6 +18,8 @@ input[type=text] {
   background: var(--field); color: var(--ink); font: 500 13px var(--font-body);
 }
 .field small { font-size: 11px; }
+/* Height is worked out from the picture, not typed */
+input[readonly] { color: var(--muted); cursor: default; }
 
 .drag canvas { cursor: grab; touch-action: none; } /* touch-action: dragging moves the picture instead of scrolling */
 .drag canvas.dragging { cursor: grabbing; }

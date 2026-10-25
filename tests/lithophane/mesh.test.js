@@ -21,6 +21,27 @@
     });
   }
 
+  // Every slicer reads the part the same way only if it's one closed solid: no separate
+  // pieces (like a base that overlaps the picture), and every edge shared by exactly two faces.
+  for (const [name, over] of [["curved", {}], ["flat", { curved: false }], ["no frame", { frame: 0 }]]) {
+    test(`the picture and the base are one solid, with no overlapping parts (${name})`, () => {
+      const { mesh } = build(over);
+      const key = v => mesh.pos.slice(v * 3, v * 3 + 3).map(x => x.toFixed(4)).join(",");
+      const parent = new Map(), find = k => { while (parent.get(k) !== k) k = parent.get(k); return k; };
+      const edges = new Map();
+      for (let f = 0; f < mesh.idx.length; f += 3) {
+        const k = [0, 1, 2].map(c => key(mesh.idx[f + c]));
+        k.forEach(x => parent.has(x) || parent.set(x, x));
+        parent.set(find(k[1]), find(k[0])); parent.set(find(k[2]), find(k[0]));
+        for (let c = 0; c < 3; c++) { const e = k[c] + "|" + k[(c + 1) % 3]; edges.set(e, (edges.get(e) || 0) + 1); }
+      }
+      const pieces = new Set([...parent.keys()].map(find)).size;
+      expect(pieces).toBe(1, "separate pieces:");
+      const bad = [...edges].filter(([e, n]) => n !== 1 || edges.get(e.split("|").reverse().join("|")) !== 1).length;
+      expect(bad).toBe(0, "edges not shared by exactly two faces:");
+    });
+  }
+
   // Area inside an outline, in mm² (shoelace formula).
   const area = pts => Math.abs(pts.reduce((a, [x, y], i) => {
     const [x2, y2] = pts[(i + 1) % pts.length];
@@ -30,7 +51,7 @@
   test("a flat lithophane holds as much plastic as its thickness says", () => {
     const { o, mesh } = build({ curved: false }, plain(1), 0.25);
     const iw = o.width - 2 * o.frame, ih = o.height - 2 * o.frame;
-    const base = area(LM.mesh.baseOutline(o)) * (LM.mesh.BASE.thickness + LM.mesh.OVERLAP);
+    const base = area(LM.mesh.baseOutline(o)) * LM.mesh.BASE.thickness;
     const expected = iw * ih * o.minT + (o.width * o.height - iw * ih) * o.maxT + base;
     // the grid turns the frame's inner edge into a slope, so allow a little either way
     expect(volume(mesh)).toBeCloseTo(expected, expected * 0.05, "volume (mm³):");
@@ -44,7 +65,7 @@
   });
 
   test("the bumps are on the outside, and the side facing the light is smooth", () => {
-    const { o, mesh } = build({ curved: false }, plain(1), 0.25), d = o.distance, top = LM.mesh.BASE.thickness + LM.mesh.OVERLAP;
+    const { o, mesh } = build({ curved: false }, plain(1), 0.25), d = o.distance, top = LM.mesh.BASE.thickness;
     let back = -Infinity, middle = null;
     for (let i = 0; i < mesh.pos.length; i += 3) {
       const [x, y, z] = mesh.pos.slice(i, i + 3);
@@ -95,6 +116,14 @@
     expect(f.width).toBeCloseTo(x1 - x0, 0.05, "width (mm):");
     expect(f.depth).toBeCloseTo(y1 - y0, 0.05, "depth (mm):");
     expect(f.height).toBeCloseTo(z1 - z0, 1e-3, "height (mm):");
+  });
+
+  test("a Width that doesn't fit the base says which way to change it, and by how much", () => {
+    for (const [over, words] of [[{ width: 160 }, "or less"], [{ radius: 60, width: 140 }, "or less"], [{ width: 30 }, "at least"]]) {
+      const o = settings(over), msg = LM.mesh.check(o), suggested = +msg.match(/Width (\d+) mm|at least (\d+) mm/).slice(1).find(Boolean);
+      expect(msg.includes(words)).toBe(true, `${JSON.stringify(over)} says "${words}":`);
+      expect(LM.mesh.check({ ...o, width: suggested })).toBe("", `${JSON.stringify(over)} with the suggested Width ${suggested} mm:`);
+    }
   });
 
   test("settings that can't be printed give a clear message instead of a broken file", () => {

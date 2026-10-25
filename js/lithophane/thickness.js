@@ -15,6 +15,12 @@ LM.thickness = (() => {
     return { x: o.frame, y: bottom, w: o.width - 2 * o.frame, h: o.height - o.frame - bottom };
   }
 
+  // The panel's height in mm that fits a picture of this shape (aspect = width / height) across
+  // the whole Width, with the frame (and the words) around it. The reverse of region.
+  function heightFor(o, aspect) {
+    return (o.width - 2 * o.frame) / aspect + 2 * o.frame + (o.text ? WORDS_STRIP : 0);
+  }
+
   // Brightness after Brightness, Contrast and Midtones. g and the result go from 0 (black) to 1 (white).
   function tone(g, o) {
     const b = Math.min(1, Math.max(0, (g - 0.5) * o.contrast + 0.5 + o.brightness));
@@ -125,5 +131,5 @@ LM.thickness = (() => {
     return { brightness, contrast, midtones };
   }
 
-  return { build, region, auto, tone };
+  return { build, region, heightFor, auto, tone };
 })();

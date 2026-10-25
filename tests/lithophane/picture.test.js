@@ -54,6 +54,15 @@
     expect(LM.picture.fit(p, 2, { x: 0, y: 0, w: 300, h: 150 }).zoom).toBe(1, "too big a box:");
   });
 
+  test("Height fits the chosen part across Width, with the frame and the words around it", () => {
+    const o = settings({ width: 110, frame: 4.5 });
+    const h = LM.thickness.heightFor(o, 2), r = LM.thickness.region({ ...o, height: h });
+    expect(r.w / r.h).toBeCloseTo(2, 1e-9, "picture shape:");
+    expect(h).toBeCloseTo(101 / 2 + 9, 1e-9, "height (mm):");
+    const words = { ...o, text: "Hi" }, rw = LM.thickness.region({ ...words, height: LM.thickness.heightFor(words, 2) });
+    expect(rw.w / rw.h).toBeCloseTo(2, 1e-9, "picture shape with words:");
+  });
+
   test("turning the picture four times puts it back", () => {
     const p = picture(3, 2, [1, 2, 3, 4, 5, 6]), once = LM.picture.rotate(p);
     expect([...once.gray].join()).toBe("4,1,5,2,6,3", "one quarter turn:");
