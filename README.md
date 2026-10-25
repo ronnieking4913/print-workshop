@@ -160,12 +160,12 @@ Print it **standing up on its base, in white PLA with 100% infill**. The front i
 | Picture shape | Rectangle | Rectangle, Oval or Heart; outside the shape is solid frame |
 | Soft edge | Off | Fades the picture into the frame over 2.5 mm |
 | Words under the picture | None | Up to 40 characters, 7.5 mm tall in an 11 mm strip above the bottom frame (shrunk to fit if long) |
-| Width / Height | 76 / 100 mm | Size of the picture panel, frame included (width is measured along the curve) |
-| Frame | 3 mm | Solid border around the picture, at full thickness |
-| Thinnest / Thickest | 0.6 / 3 mm | Plastic thickness for white and black |
-| Detail | Normal (0.2 mm) | Grid size: Fine 0.15 mm, Normal 0.2 mm, Draft 0.3 mm |
-| Light to picture | 20 mm | From the middle of the light to the front of the picture |
-| Curved, Curve radius | On, 60 mm | Bends the picture around the light; smaller bends more |
+| Width / Height | 136 / 105 mm | Size of the picture panel, frame included (width is measured along the curve; 136 mm spans 120 mm tip to tip at an 80 mm curve) |
+| Frame | 7.5 mm | Solid border around the picture, at full thickness |
+| Thinnest / Thickest | 0.5 / 2.8 mm | Plastic thickness for white and black |
+| Detail | Normal (0.25 mm) | Grid size: Fine 0.15 mm, Normal 0.25 mm, Draft 0.3 mm |
+| Light to picture | 30 mm | From the middle of the light to the front of the picture |
+| Curved, Curve radius | On, 80 mm | Bends the picture around the light; smaller bends more |
 
 Fixed base values (in `js/lithophane/mesh.js`, `BASE`): the picture stands on a flat 1.8 mm base with a U-shaped slot, 17 mm wide and 17 mm deep, that slides around the night light's bulb post. They fit the Emotionlite night light, with the light at the middle of the slot's rounded end. The base runs from the front of the picture back to the slot, 8 mm wider than the slot on each side at the back edge. They aren't on the page because they only change for a different night light.
 
