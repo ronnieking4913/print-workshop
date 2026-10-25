@@ -197,5 +197,5 @@ Double-click `tests/lithophane.html`. It uses the same `tests/runner.js` as the 
 
 ### Known limitations
 
-- **Large files.** At Normal detail the STL is about 38 MB (Fine: about 68 MB). Slicers handle that fine; Draft makes it about half the size.
+- **Large files.** At the default size and Normal detail the STL is about 46 MB (Fine: about 127 MB). Slicers handle that fine; Draft makes it about 32 MB.
 - **Where the light sits in the slot is a guess.** It's taken as the middle of the slot's rounded end. Check the first print on the real night light before printing more.
