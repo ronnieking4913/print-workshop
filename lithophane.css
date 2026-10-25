@@ -1,0 +1,15 @@
+/* The Lithophane Maker's own colors, on top of styles.css (shared with the Cookie Cutter Maker).
+   Both previews sit on a dark "night" background. */
+:root {
+  --night: #120f0b;
+  --night-glow: #2a2116;
+  --mount: #c98a4b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --night: #0b0907; --night-glow: #201a12; --mount: #b77a3e; }
+}
+:root[data-theme="dark"] { --night: #0b0907; --night-glow: #201a12; --mount: #b77a3e; }
+
+.night { background: radial-gradient(ellipse at center, var(--night-glow) 0%, var(--night) 70%); }
+.drag canvas { cursor: grab; touch-action: none; } /* touch-action: dragging moves the picture instead of scrolling */
+.drag canvas.dragging { cursor: grabbing; }
