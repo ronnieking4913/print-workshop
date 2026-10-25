@@ -63,5 +63,12 @@ LM.picture = (() => {
     return { ...moved, cx: (c.x + c.w / 2) / p.W, cy: (c.y + c.h / 2) / p.H };
   }
 
-  return { read, rotate, sample, crop, pan };
+  // The view whose crop is box (in pixels, with the panel's shape), for resizing the box by its
+  // edges. A box bigger than the picture allows comes back as big as it can be (zoom 1).
+  function fit(p, aspect, box) {
+    const full = crop(p, aspect, { cx: 0.5, cy: 0.5, zoom: 1 });
+    return { cx: (box.x + box.w / 2) / p.W, cy: (box.y + box.h / 2) / p.H, zoom: Math.max(1, full.w / box.w) };
+  }
+
+  return { read, rotate, sample, crop, pan, fit };
 })();

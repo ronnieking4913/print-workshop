@@ -9,7 +9,8 @@ LM.preview = (() => {
   // The whole photo in color, darkened outside r (LM.picture.crop), the part that gets printed,
   // with the picture's shape (LM.shapes) drawn inside it.
   function photo(canvas, p, r, shape) {
-    canvas.width = p.W; canvas.height = p.H;
+    // resizing a canvas clears it and is slow; the picture covers it all anyway
+    if (canvas.width !== p.W || canvas.height !== p.H) { canvas.width = p.W; canvas.height = p.H; }
     const g = canvas.getContext("2d");
     g.drawImage(p.canvas, 0, 0);
     g.fillStyle = "rgb(0 0 0 / 0.55)";

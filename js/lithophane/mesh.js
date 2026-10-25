@@ -3,7 +3,7 @@
 //
 // Coordinates in mm: X runs left to right as seen from the front, Z is up, the light (the middle
 // of the slot's rounded end) is at the origin and the viewer stands at -Y. The front of the
-// picture is smooth; the bumps face the light.
+// picture carries the bumps (the picture shows on the outside); the side facing the light is smooth.
 window.LM = window.LM || {};
 
 LM.mesh = (() => {
@@ -65,7 +65,8 @@ LM.mesh = (() => {
   function build(map, o) {
     const mesh = { pos: [], idx: [] }, bend = bender(o), base = BASE.thickness;
     const s = spaced(-o.width / 2, o.width / 2, map.cols), z = spaced(base, base + o.height, map.rows);
-    shell(mesh, bend, s, z, () => 0, (i, j) => map.t[j * map.cols + i]);
+    // the back sits Thickest in from the front, so the bumps come out the front and the back is smooth
+    shell(mesh, bend, s, z, (i, j) => o.maxT - map.t[j * map.cols + i], () => o.maxT);
     prism(mesh, baseOutline(o), 0, base + OVERLAP);
     return mesh;
   }

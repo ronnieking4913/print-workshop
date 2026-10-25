@@ -138,13 +138,13 @@ Turns a photo into a lithophane for a night light: a thin, curved plastic pictur
 
 Double-click `Lithophane Maker.html` to open it in Edge or Chrome, or click **Lithophane** in the menu on the Cookie Cutter Maker.
 
-1. **Picture.** Choose or drag in a photo. The **Picture** preview shows the whole photo; drag the bright box to choose the part that's printed, and scroll (or use **Zoom**) to zoom in or out. **On the night light** shows the result, curved and glowing. Choosing a picture runs **Auto-adjust light**, which sets **Brightness**, **Contrast** and **Midtones** to suit it; fine-tune them by hand, or click Auto-adjust again after moving the box. **Sharpness** makes eyes and edges crisper. **Turn picture** rotates it a quarter turn.
+1. **Picture.** Choose or drag in a photo. The **Picture** preview shows the whole photo; drag the bright box to choose the part that's printed, drag its edges or corners to make the print wider or taller (this changes **Width** and **Height**, and shows more of the photo), and scroll (or use **Zoom**) to zoom in or out. **On the night light** shows the result, curved and glowing. Choosing a picture runs **Auto-adjust light**, which sets **Brightness**, **Contrast** and **Midtones** to suit it; fine-tune them by hand, or click Auto-adjust again after moving the box. **Sharpness** makes eyes and edges crisper. **Turn picture** rotates it a quarter turn.
 2. **Shape & words.** Show the picture as a rectangle, oval or heart, with an optional **soft edge** that fades into the frame. **Words under the picture** (like names and a date) glow in a strip under it.
 3. **Size.** Width and height of the picture panel, the frame around it, and how thin (brightest) and thick (darkest) the plastic gets.
 4. **Night light fit.** How far the picture sits from the light and how much it curves. The base that attaches to the night light is fixed, so it always fits.
 5. **Save.** **Download STL** saves `<name>-lithophane.stl`.
 
-Print it **standing up on its base, in white PLA with 100% infill**. The front is smooth and the bumps face the light.
+Print it **standing up on its base, in white PLA with 100% infill**. The bumps are on the outside, and the side facing the light is smooth.
 
 **The night light measurements are placeholders.** Measure the real night light and change the default `value="…"` numbers in `Lithophane Maker.html` (Size and Night light fit), so every print fits without retyping them.
 
@@ -160,8 +160,8 @@ Print it **standing up on its base, in white PLA with 100% infill**. The front i
 | Picture shape | Rectangle | Rectangle, Oval or Heart; outside the shape is solid frame |
 | Soft edge | Off | Fades the picture into the frame over 2.5 mm |
 | Words under the picture | None | Up to 40 characters, 7.5 mm tall in an 11 mm strip above the bottom frame (shrunk to fit if long) |
-| Width / Height | 136 / 105 mm | Size of the picture panel, frame included (width is measured along the curve; 136 mm spans 120 mm tip to tip at an 80 mm curve) |
-| Frame | 7.5 mm | Solid border around the picture, at full thickness |
+| Width / Height | 136 / 85 mm | Size of the picture panel, frame included (width is measured along the curve; 136 mm spans 120 mm tip to tip at an 80 mm curve) |
+| Frame | 4.5 mm | Solid border around the picture, at full thickness |
 | Thinnest / Thickest | 0.5 / 2.8 mm | Plastic thickness for white and black |
 | Detail | Normal (0.25 mm) | Grid size: Fine 0.15 mm, Normal 0.25 mm, Draft 0.3 mm |
 | Light to picture | 30 mm | From the middle of the light to the front of the picture |
@@ -190,7 +190,7 @@ Double-click `tests/lithophane.html`. It uses the same `tests/runner.js` as the 
 
 | File | Covers |
 |---|---|
-| `tests/lithophane/picture.test.js` | White thin and black thick, frame, picture the right way up, brightness and contrast, cropping, dragging stays inside the picture, turning, reading pixels |
+| `tests/lithophane/picture.test.js` | White thin and black thick, frame, picture the right way up, brightness and contrast, cropping, dragging stays inside the picture, resizing the box by its edges, turning, reading pixels |
 | `tests/lithophane/mesh.test.js` | Closed mesh with outward faces (curved, flat, with and without base), amount of plastic, distance from the light, width along the curve, picture on the base, slot shape and position, size readout, clear messages for impossible settings |
 | `tests/lithophane/shape.test.js` | Oval and heart shapes, soft edge, words glow and make room, too-short pictures for words, Midtones, Sharpness, Auto-adjust, the shape drawn in the Picture preview |
 | `tests/lithophane/layout.test.js` | Menu fits and highlights the open maker, previews fit their panel, Picture preview marks the printed part, turning turns the color photo, night light preview changes with the picture |

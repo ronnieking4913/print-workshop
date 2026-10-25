@@ -35,7 +35,7 @@
       <input type="file" id="file" accept="image/*" hidden>
 
       <label class="field" for="zoom"><span>Zoom <output id="zoomVal">1.0×</output></span>
-        <input type="range" id="zoom" min="100" max="400" value="100" data-forget>
+        <input type="range" id="zoom" min="100" max="400" step="any" value="100" data-forget>
       </label>
       <button class="ghost" id="auto" type="button" title="Sets Brightness, Contrast and Midtones for this picture. Done for you when you choose a picture.">✨ Auto-adjust light</button>
       <div class="grid2">
@@ -71,8 +71,8 @@
       <h2><span class="num">3</span>Size</h2>
       <div class="grid3">
         <label class="field" for="width"><span>Width</span><span class="unit"><input type="number" id="width" value="136" min="20" max="250" step="1"><i>mm</i></span></label>
-        <label class="field" for="height"><span>Height</span><span class="unit"><input type="number" id="height" value="105" min="20" max="250" step="1"><i>mm</i></span></label>
-        <label class="field" for="frame"><span>Frame</span><span class="unit"><input type="number" id="frame" value="7.5" min="0" max="20" step="0.5"><i>mm</i></span></label>
+        <label class="field" for="height"><span>Height</span><span class="unit"><input type="number" id="height" value="85" min="20" max="250" step="1"><i>mm</i></span></label>
+        <label class="field" for="frame"><span>Frame</span><span class="unit"><input type="number" id="frame" value="4.5" min="0" max="20" step="0.5"><i>mm</i></span></label>
         <label class="field" for="minT" title="Thickness of the brightest parts of the picture"><span>Thinnest</span><span class="unit"><input type="number" id="minT" value="0.5" min="0.3" max="3" step="0.1"><i>mm</i></span></label>
         <label class="field" for="maxT" title="Thickness of the darkest parts of the picture, and of the frame"><span>Thickest</span><span class="unit"><input type="number" id="maxT" value="2.8" min="1" max="8" step="0.1"><i>mm</i></span></label>
         <label class="field" for="res"><span>Detail</span>
@@ -105,7 +105,7 @@
         <button class="ghost small" id="turn" type="button" title="Turn the picture a quarter turn clockwise">↻ Turn picture</button>
         <button class="ghost small" id="center" type="button" title="Put the box back in the middle of the picture">Center picture</button>
       </div>
-      <p class="hint full">Drag the bright box to choose the part that's printed. Scroll to zoom in or out.</p>
+      <p class="hint full">Drag the bright box to choose the part that's printed, or drag its edges to change Width and Height. Scroll to zoom in or out.</p>
     </header>
     <div class="canvas-box checker drag"><canvas id="photo"></canvas></div>
   </section>

@@ -47,6 +47,13 @@
     expect(r.y).toBeCloseTo(0, 1e-9, "top edge:");
   });
 
+  test("resizing the box by its edges: fit gives back the box asked for, and stops at the picture", () => {
+    const p = { W: 100, H: 50 }, box = { x: 10, y: 5, w: 40, h: 20 };
+    const r = LM.picture.crop(p, 2, { ...LM.picture.fit(p, 2, box) });
+    for (const k of ["x", "y", "w", "h"]) expect(r[k]).toBeCloseTo(box[k], 1e-9, `${k}:`);
+    expect(LM.picture.fit(p, 2, { x: 0, y: 0, w: 300, h: 150 }).zoom).toBe(1, "too big a box:");
+  });
+
   test("turning the picture four times puts it back", () => {
     const p = picture(3, 2, [1, 2, 3, 4, 5, 6]), once = LM.picture.rotate(p);
     expect([...once.gray].join()).toBe("4,1,5,2,6,3", "one quarter turn:");

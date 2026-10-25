@@ -43,6 +43,20 @@
     }
   });
 
+  test("the bumps are on the outside, and the side facing the light is smooth", () => {
+    const { o, mesh } = build({ curved: false }, plain(1), 0.25), d = o.distance, top = LM.mesh.BASE.thickness + LM.mesh.OVERLAP;
+    let back = -Infinity, middle = null;
+    for (let i = 0; i < mesh.pos.length; i += 3) {
+      const [x, y, z] = mesh.pos.slice(i, i + 3);
+      if (z <= top) continue; // the base
+      back = Math.max(back, y);
+      if (Math.abs(x) < 0.01 && Math.abs(z - top - o.height / 2) < 0.2) middle = Math.min(middle ?? Infinity, y);
+    }
+    expect(back).toBeCloseTo(-d + o.maxT, 1e-6, "back, facing the light (mm):");
+    // white is thinnest: its front sits furthest in, so the frame stands out around it
+    expect(middle).toBeCloseTo(-d + o.maxT - o.minT, 1e-3, "front of the white middle (mm):");
+  });
+
   test("the picture is as wide as Width along its curve, and stands Height tall on the base", () => {
     const { o, mesh } = build({ radius: 40 });
     const [x0, x1] = range(mesh, 0), [z0, z1] = range(mesh, 2);
